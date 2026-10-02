@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Просмотр файлов в assets</title>
+    <title>Мои файлы</title>
     <style>
         * {
             margin: 0;
@@ -20,7 +20,7 @@
         }
 
         .container {
-            max-width: 1000px;
+            max-width: 1100px;
             margin: 0 auto;
             background: #fff;
             border-radius: 16px;
@@ -31,16 +31,55 @@
         h1 {
             text-align: center;
             color: #4a4a8a;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             font-size: 2em;
         }
 
         .subtitle {
             text-align: center;
             color: #888;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             font-size: 0.95em;
         }
+
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 200px;
+            max-width: 400px;
+            padding: 10px 16px;
+            border: 2px solid #e0e0e8;
+            border-radius: 8px;
+            font-size: 0.95em;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-input:focus {
+            border-color: #667eea;
+        }
+
+        .refresh-btn {
+            padding: 10px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+
+        .refresh-btn:hover { transform: scale(1.05); }
+        .refresh-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
         .status {
             padding: 12px 20px;
@@ -48,40 +87,32 @@
             margin-bottom: 20px;
             text-align: center;
             font-weight: 500;
+            font-size: 0.9em;
         }
 
-        .status.loading {
-            background: #e3f2fd;
-            color: #1976d2;
-        }
-
-        .status.error {
-            background: #ffebee;
-            color: #c62828;
-        }
-
-        .status.success {
-            background: #e8f5e9;
-            color: #2e7d32;
-        }
+        .status.loading { background: #e3f2fd; color: #1976d2; }
+        .status.error   { background: #ffebee; color: #c62828; }
+        .status.success { background: #e8f5e9; color: #2e7d32; }
+        .status.warn    { background: #fff3e0; color: #e65100; }
 
         .file-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 20px;
+            gap: 18px;
         }
 
         .file-card {
             background: #f8f9fa;
             border-radius: 12px;
-            padding: 20px;
+            padding: 16px;
             text-align: center;
-            transition: all 0.3s ease;
+            transition: all 0.25s ease;
             border: 2px solid transparent;
             cursor: pointer;
             text-decoration: none;
             color: inherit;
             display: block;
+            overflow: hidden;
         }
 
         .file-card:hover {
@@ -93,19 +124,28 @@
 
         .file-icon {
             font-size: 3em;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
+            line-height: 1;
         }
 
         .file-name {
-            font-size: 0.9em;
+            font-size: 0.88em;
             font-weight: 600;
             color: #333;
             word-break: break-word;
-            margin-bottom: 5px;
+            margin-bottom: 4px;
         }
 
-        .file-type {
+        .file-desc {
             font-size: 0.75em;
+            color: #777;
+            margin-bottom: 6px;
+            line-height: 1.4;
+            word-break: break-word;
+        }
+
+        .file-meta {
+            font-size: 0.7em;
             color: #888;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -113,242 +153,330 @@
 
         .file-preview {
             width: 100%;
-            height: 100px;
+            height: 110px;
             object-fit: cover;
             border-radius: 8px;
             margin-bottom: 10px;
+            background: #eee;
+            display: block;
         }
 
         .empty-state {
+            grid-column: 1 / -1;
             text-align: center;
-            padding: 60px 20px;
+            padding: 50px 20px;
             color: #999;
         }
 
-        .empty-state .icon {
-            font-size: 5em;
-            margin-bottom: 20px;
-            opacity: 0.5;
-        }
-
-        .empty-state h3 {
-            font-size: 1.3em;
-            margin-bottom: 10px;
-            color: #666;
-        }
-
-        .empty-state p {
-            font-size: 0.9em;
-        }
-
-        .refresh-btn {
-            display: block;
-            margin: 20px auto 0;
-            padding: 12px 30px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            font-size: 1em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-
-        .refresh-btn:hover {
-            transform: scale(1.05);
+        .empty-state .icon { font-size: 4em; margin-bottom: 15px; opacity: 0.5; }
+        .empty-state h3 { font-size: 1.2em; margin-bottom: 10px; color: #666; }
+        .empty-state p { font-size: 0.9em; line-height: 1.7; }
+        .empty-state code {
+            background: #f0f0f5;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #764ba2;
+            font-size: 0.88em;
         }
 
         .folder-badge {
             display: inline-block;
             background: #667eea;
             color: #fff;
-            padding: 4px 12px;
+            padding: 5px 14px;
             border-radius: 20px;
             font-size: 0.8em;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
+            font-weight: 600;
         }
+
+        .center { text-align: center; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>📁 Просмотр файлов</h1>
-        <p class="subtitle">Папка: <code>assets/</code></p>
-        
-        <div class="folder-badge" id="fileCount">Загрузка...</div>
-        
-        <div id="status" class="status loading">⏳ Сканирование папки assets...</div>
+        <h1>📁 Мои файлы</h1>
+        <p class="subtitle">Список берётся из <code>assets-manifest.json</code></p>
+
+        <div class="center">
+            <span class="folder-badge" id="fileCount">Загрузка...</span>
+        </div>
+
+        <div id="status" class="status loading">⏳ Загрузка списка файлов...</div>
+
+        <div class="toolbar">
+            <input type="text" class="search-input" id="searchInput"
+                   placeholder="🔍 Поиск по названию..." oninput="applyFilter()">
+            <button class="refresh-btn" id="refreshBtn" onclick="loadFiles()">🔄 Обновить</button>
+        </div>
+
         <div id="fileList" class="file-grid"></div>
-        
-        <button class="refresh-btn" onclick="loadFiles()">🔄 Обновить список</button>
     </div>
 
     <script>
-        // Список файлов в папке assets
-        // ⚠️ ВАЖНО: Браузер не может напрямую читать содержимое папки по соображениям безопасности.
-        // Поэтому нужно либо:
-        // 1) Использовать сервер (Node.js, PHP, Python и т.д.), который вернёт JSON со списком файлов
-        // 2) Вручную поддерживать массив файлов ниже
-        // 3) Использовать file listing через сервер (например, python -m http.server с директорией index)
+        /* =========================================================
+           НАСТРОЙКИ
+           ========================================================= */
 
-        // ВАРИАНТ 1: Если у вас есть серверный endpoint, возвращающий JSON со списком файлов:
-        // const FILES_ENDPOINT = '/api/files'; // например
+        const CONFIG = {
+            // Путь к файлу со списком ассетов
+            manifestUrl: 'assets-manifest.json'
+        };
 
-        // ВАРИАНТ 2: Ручной список файлов (измените под свои файлы)
-        const MANUAL_FILES = [
-            // Примеры:
-            // 'image1.jpg',
-            // 'document.pdf',
-            // 'video.mp4',
-            // 'music.mp3',
-        ];
+        /* =========================================================
+           ОПРЕДЕЛЕНИЕ ТИПА ФАЙЛА
+           ========================================================= */
 
-        const ASSETS_PATH = 'assets/';
+        const EXT_MAP = {
+            image:    ['jpg','jpeg','png','gif','webp','svg','bmp','ico','avif'],
+            video:    ['mp4','webm','ogv','avi','mov','mkv','m4v'],
+            audio:    ['mp3','wav','ogg','flac','m4a','aac','opus'],
+            document: ['pdf','doc','docx','txt','rtf','odt','xls','xlsx','ppt','pptx','csv','md'],
+            archive:  ['zip','rar','7z','tar','gz','bz2'],
+            code:     ['html','css','js','json','xml','py','java','cpp','c','php','ts','jsx','tsx','vue','sh','yml','yaml']
+        };
 
-        // Расширения для определения иконок
         const ICONS = {
-            image: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico'],
-            video: ['mp4', 'webm', 'ogg', 'avi', 'mov', 'mkv'],
-            audio: ['mp3', 'wav', 'ogg', 'flac', 'm4a', 'aac'],
-            document: ['pdf', 'doc', 'docx', 'txt', 'rtf', 'odt', 'xls', 'xlsx', 'ppt', 'pptx'],
-            archive: ['zip', 'rar', '7z', 'tar', 'gz'],
-            code: ['html', 'css', 'js', 'json', 'xml', 'py', 'java', 'cpp', 'c', 'php']
+            image: '🖼️', video: '🎬', audio: '🎵',
+            document: '📄', archive: '📦', code: '💻', other: '📎'
         };
 
-        const ICON_EMOJI = {
-            image: '🖼️',
-            video: '🎬',
-            audio: '🎵',
-            document: '📄',
-            archive: '📦',
-            code: '💻',
-            other: '📎'
-        };
+        function getExtFromUrl(url) {
+            try {
+                // Убираем query-параметры и hash
+                const clean = url.split('?')[0].split('#')[0];
+                const last = clean.split('/').pop();
+                const i = last.lastIndexOf('.');
+                return i === -1 ? '' : last.slice(i + 1).toLowerCase();
+            } catch {
+                return '';
+            }
+        }
 
-        function getFileType(filename) {
-            const ext = filename.split('.').pop().toLowerCase();
-            for (const [type, exts] of Object.entries(ICONS)) {
-                if (exts.includes(ext)) return type;
+        function detectType(url, forcedType) {
+            if (forcedType && ICONS[forcedType]) return forcedType;
+            const ext = getExtFromUrl(url);
+            for (const [type, list] of Object.entries(EXT_MAP)) {
+                if (list.includes(ext)) return type;
             }
             return 'other';
         }
 
-        function getIcon(type) {
-            return ICON_EMOJI[type] || ICON_EMOJI.other;
-        }
-
-        function formatSize(bytes) {
-            if (bytes === 0) return '0 B';
-            const k = 1024;
-            const sizes = ['B', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
-
-        // Попытка автоматически получить список файлов через fetch
-        // (работает, если сервер возвращает directory listing, например python http.server)
-        async function tryAutoLoad() {
+        function getNameFromUrl(url) {
             try {
-                const response = await fetch(ASSETS_PATH);
-                if (!response.ok) throw new Error('Directory listing not available');
-                
-                const text = await response.text();
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(text, 'text/html');
-                const links = doc.querySelectorAll('a');
-                
-                const files = [];
-                links.forEach(link => {
-                    const href = link.getAttribute('href');
-                    if (href && 
-                        href !== '../' && 
-                        !href.startsWith('?') && 
-                        !href.startsWith('/') &&
-                        !href.endsWith('/') &&
-                        href !== ASSETS_PATH) {
-                        files.push(href);
-                    }
-                });
-                
-                return files.length > 0 ? files : null;
-            } catch (e) {
-                return null;
+                const clean = url.split('?')[0].split('#')[0];
+                const last = decodeURIComponent(clean.split('/').pop());
+                return last || url;
+            } catch {
+                return url;
             }
         }
 
-        async function loadFiles() {
-            const statusEl = document.getElementById('status');
+        /* =========================================================
+           ЗАГРУЗКА MANIFEST
+           ========================================================= */
+
+        let ALL_FILES = [];
+
+        async function fetchManifest() {
+            const res = await fetch(CONFIG.manifestUrl + '?t=' + Date.now(), {
+                cache: 'no-store'
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+            const raw = await res.json();
+
+            // Поддерживаем несколько форматов:
+            // 1) ["url1", "url2"]
+            // 2) [{ name, url, type, description }]
+            // 3) { files: [...] }
+            let list = Array.isArray(raw) ? raw : (raw.files || []);
+
+            return list.map(item => {
+                // Просто строка со ссылкой
+                if (typeof item === 'string') {
+                    return {
+                        name: getNameFromUrl(item),
+                        url: item,
+                        type: detectType(item),
+                        description: '',
+                        size: null
+                    };
+                }
+
+                // Объект
+                const url = item.url || item.src || item.link || '';
+                return {
+                    name: item.name || getNameFromUrl(url),
+                    url: url,
+                    type: detectType(url, item.type),
+                    description: item.description || item.desc || '',
+                    size: item.size ?? null
+                };
+            }).filter(f => f.url);
+        }
+
+        /* =========================================================
+           ОТРИСОВКА
+           ========================================================= */
+
+        function renderFiles(files, source) {
             const listEl = document.getElementById('fileList');
+            const statusEl = document.getElementById('status');
             const countEl = document.getElementById('fileCount');
 
-            statusEl.className = 'status loading';
-            statusEl.textContent = '⏳ Сканирование папки assets...';
             listEl.innerHTML = '';
-            countEl.textContent = 'Загрузка...';
 
-            // Пробуем автоматически загрузить список
-            let files = await tryAutoLoad();
-
-            // Если не удалось — используем ручной список
-            if (!files || files.length === 0) {
-                files = MANUAL_FILES;
-            }
-
-            if (!files || files.length === 0) {
-                statusEl.className = 'status error';
-                statusEl.textContent = '⚠️ Не удалось автоматически получить список файлов.';
+            if (!files.length) {
+                statusEl.className = 'status warn';
+                statusEl.textContent = '⚠️ Список файлов пуст';
                 countEl.textContent = '0 файлов';
                 listEl.innerHTML = `
-                    <div class="empty-state" style="grid-column: 1/-1;">
+                    <div class="empty-state">
                         <div class="icon">📂</div>
-                        <h3>Папка пуста или недоступна</h3>
-                        <p>Браузер не может читать содержимое папки напрямую по соображениям безопасности.</p>
-                        <p style="margin-top: 10px;">Откройте сайт через локальный сервер:</p>
-                        <p style="margin-top: 5px; font-family: monospace; background: #f0f0f0; padding: 8px; border-radius: 6px; display: inline-block;">
-                            python -m http.server 8000
+                        <h3>Пока ничего нет</h3>
+                        <p>Добавьте записи в файл <code>assets-manifest.json</code>:</p>
+                        <p style="margin-top:12px;">
+                            <code>[
+  { "name": "Котик", "url": "https://raw.githubusercontent.com/..." }
+]</code>
                         </p>
-                        <p style="margin-top: 10px;">Или добавьте файлы вручную в массив <code>MANUAL_FILES</code> в коде.</p>
-                    </div>
-                `;
+                    </div>`;
                 return;
             }
 
             statusEl.className = 'status success';
-            statusEl.textContent = `✅ Найдено файлов: ${files.length}`;
+            statusEl.textContent = `✅ Загружено: ${files.length} (источник: ${source})`;
             countEl.textContent = `📊 ${files.length} файлов`;
 
-            files.forEach(filename => {
-                const type = getFileType(filename);
-                const icon = getIcon(type);
-                const fileUrl = ASSETS_PATH + filename;
-
-                const card = document.createElement('a');
-                card.className = 'file-card';
-                card.href = fileUrl;
-                card.target = '_blank';
-                card.rel = 'noopener noreferrer';
-
-                // Для изображений показываем превью
-                if (type === 'image') {
-                    card.innerHTML = `
-                        <img src="${fileUrl}" alt="${filename}" class="file-preview" 
-                             onerror="this.style.display='none'">
-                        <div class="file-name">${filename}</div>
-                        <div class="file-type">${type}</div>
-                    `;
-                } else {
-                    card.innerHTML = `
-                        <div class="file-icon">${icon}</div>
-                        <div class="file-name">${filename}</div>
-                        <div class="file-type">${type}</div>
-                    `;
-                }
-
+            files.forEach(f => {
+                const card = buildCard(f);
                 listEl.appendChild(card);
             });
         }
 
-        // Запуск при загрузке страницы
+        function buildCard(f) {
+            const icon = ICONS[f.type] || ICONS.other;
+
+            const card = document.createElement('a');
+            card.className = 'file-card';
+            card.href = f.url;
+            card.target = '_blank';
+            card.rel = 'noopener noreferrer';
+            card.dataset.name = f.name.toLowerCase();
+
+            const meta = [f.type];
+            if (f.size) meta.push(formatSize(f.size));
+
+            const descHtml = f.description
+                ? `<div class="file-desc">${escapeHtml(f.description)}</div>`
+                : '';
+
+            if (f.type === 'image') {
+                const img = document.createElement('img');
+                img.className = 'file-preview';
+                img.src = f.url;
+                img.alt = f.name;
+                img.loading = 'lazy';
+                img.referrerPolicy = 'no-referrer';
+                img.onerror = () => {
+                    img.replaceWith(makeIconDiv(icon));
+                };
+                card.appendChild(img);
+            } else {
+                card.appendChild(makeIconDiv(icon));
+            }
+
+            const nameDiv = document.createElement('div');
+            nameDiv.className = 'file-name';
+            nameDiv.textContent = f.name;
+            card.appendChild(nameDiv);
+
+            if (descHtml) {
+                const temp = document.createElement('div');
+                temp.innerHTML = descHtml;
+                card.appendChild(temp.firstChild);
+            }
+
+            const metaDiv = document.createElement('div');
+            metaDiv.className = 'file-meta';
+            metaDiv.textContent = meta.join(' • ');
+            card.appendChild(metaDiv);
+
+            return card;
+        }
+
+        function makeIconDiv(emoji) {
+            const div = document.createElement('div');
+            div.className = 'file-icon';
+            div.textContent = emoji;
+            return div;
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function formatSize(bytes) {
+            if (!bytes && bytes !== 0) return '';
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        /* =========================================================
+           ФИЛЬТР ПОИСКА
+           ========================================================= */
+
+        function applyFilter() {
+            const q = document.getElementById('searchInput').value.toLowerCase().trim();
+            document.querySelectorAll('.file-card').forEach(card => {
+                const name = card.dataset.name || '';
+                card.style.display = (!q || name.includes(q)) ? '' : 'none';
+            });
+        }
+
+        /* =========================================================
+           ГЛАВНАЯ ФУНКЦИЯ
+           ========================================================= */
+
+        async function loadFiles() {
+            const statusEl = document.getElementById('status');
+            const countEl = document.getElementById('fileCount');
+            const btn = document.getElementById('refreshBtn');
+
+            btn.disabled = true;
+            statusEl.className = 'status loading';
+            statusEl.textContent = '⏳ Загрузка списка файлов...';
+            countEl.textContent = 'Загрузка...';
+            document.getElementById('fileList').innerHTML = '';
+
+            try {
+                ALL_FILES = await fetchManifest();
+                renderFiles(ALL_FILES, 'assets-manifest.json');
+            } catch (e) {
+                console.error(e);
+                statusEl.className = 'status error';
+                statusEl.textContent = '❌ Не удалось загрузить assets-manifest.json';
+                countEl.textContent = '0 файлов';
+                document.getElementById('fileList').innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">⚠️</div>
+                        <h3>Не удалось загрузить список</h3>
+                        <p>Убедитесь, что файл <code>assets-manifest.json</code> лежит рядом с <code>index.html</code> и содержит корректный JSON.</p>
+                        <p style="margin-top:10px;">Ошибка: <code>${escapeHtml(e.message || e)}</code></p>
+                    </div>`;
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
         window.addEventListener('DOMContentLoaded', loadFiles);
     </script>
 </body>
